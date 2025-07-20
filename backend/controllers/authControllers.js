@@ -53,7 +53,6 @@ const REGISTER = async (req, res) => {
     const newuser = await User.create({
       first_name,
       last_name,
-      password,
       contact,
       email: email.toLowerCase(),
       password: encryptedPassword,
@@ -64,6 +63,7 @@ const REGISTER = async (req, res) => {
       TOKEN_KEY,
       { expiresIn: "15d" }
     );
+    console.log(token);
     newuser.token = token;
     await newuser.save();
     res.send({ msg: "user created", status: 200, user: newuser });

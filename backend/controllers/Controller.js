@@ -1,7 +1,9 @@
+const mongoose = require('mongoose');
 const { User } = require("../model/userSchema");
 const { WasteInfo } = require("../model/WasteInfoSchema");
 const { emi_fac } = require("../utilities/emi_factor");
-const {UserExits} = require('../utilities/checkuser')
+const { UserExits } = require('../utilities/checkuser')
+
 // getting all users
 const GET_ALL_USER = async (req, res) => {
   try {
@@ -21,28 +23,34 @@ const GET_WASTE_INFO = async (req, res) => {
   }
 };
 // getting particular user contribution
-const GET_USER_WASTE = async (req,res)=> {
+const GET_USER_WASTE = async (req, res) => {
   try {
-    const {userId} = req.params;
+    const { userId } = req.params;
     const user = UserExits(userId);
-    if(!user){return res.send(user)}
-    const {contribution} = await User.findById(userId).populate('contribution')
-    res.send({msg:"success",status:200,data:contribution});
+    if (!user) { return res.send(user) }
+    const { contribution } = await User.findById(userId).populate('contribution')
+    res.send({ msg: "success", status: 200, data: contribution });
   } catch (error) {
-    res.send({msg:"internal server error",status:500});
+    res.send({ msg: "internal server error", status: 500 });
   }
 }
 // posting waste info by user
 const POST_WASTE_INFO = async (req, res) => {
   try {
     const { weight, nature, duration, location, image, description, userId } = req.body;
-    const user = await User.findById(userId);
-    if (!user) {res.send({ msg: "user dosen't exits", status: 400 })}
+
+    let user = null;
+    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+      user = await User.findById(userId);
+    }
+    // If userId is provided but user not found, return error
+    if (userId && !user) {
+      return res.send({ msg: "user doesn't exist", status: 400 });
+    }
     const ef = emi_fac[nature];
     const emif_val = Math.floor(ef * weight);
-    
-    const recycle = ["metal", "stationery", "E_waste", "Plastics", "glass"];
 
+    const recycle = ["metal", "stationery", "E_waste", "Plastics", "glass"];
     const non_recycle = [
       "Organic",
       "sewage",
@@ -68,7 +76,6 @@ const POST_WASTE_INFO = async (req, res) => {
     // checking for recyclable and biodegradable
     const bio = biodegradable.filter((item) => item == nature);
     const non_bio = non_biodegradable.filter((item) => item == nature);
-
     const re = recycle.filter((item) => item == nature);
     const non_re = non_recycle.filter((item) => item == nature);
 
@@ -88,18 +95,22 @@ const POST_WASTE_INFO = async (req, res) => {
 
     // creating a new waste object 
     const newWaste = await WasteInfo.create(newData);
-    // updating the user contribution array;
-    const wasteId = newWaste._id;
-    user.contribution.push(wasteId);
-    await user.save();
 
-    res.send({ msg: "success", status: 200 , newWaste});
+    // If user exists, update their contribution
+    if (user) {
+      const wasteId = newWaste._id;
+      user.contribution.push(wasteId);
+      await user.save();
+    }
+
+    res.send({ msg: "success", status: 200, newWaste });
   } catch (error) {
-    return res.send({ msg: "internal server error", status: 500 });
+    console.error(error);
+    return res.send({ msg: "internal server error h", status: 500 });
   }
 };
 
-const DELETE_WASTE_INFO = async (req, res) => {};
+const DELETE_WASTE_INFO = async (req, res) => { };
 
 module.exports = {
   GET_ALL_USER,

@@ -5,10 +5,10 @@ const express = require('express')
 const cors = require('cors');
 const connectdb = require('./config/db')
 const bodyParser = require('body-parser')
-const UserRouter =  require('./Routes/Route.js')
+const UserRouter = require('./Routes/Route.js')
 // importing controllers
-const {GET_ALL_USER} = require('./controllers/Controller.js')
-const {LOGIN,REGISTER} = require('./controllers/authControllers')
+const { GET_ALL_USER } = require('./controllers/Controller.js')
+const { LOGIN, REGISTER } = require('./controllers/authControllers')
 
 const PORT = process.env.PORT
 // connecting the database
@@ -19,11 +19,11 @@ const app = express();
 app.use(cors());
 // to parse json data from client 
 app.use(bodyParser.json());
-app.use(express.urlencoded({extended:false}))
+app.use(express.urlencoded({ extended: false }))
 
-app.use('/api',UserRouter)
-app.get('/',(req,res)=>{res.send({msg:"success",status:200})})
+app.use('/api', UserRouter)
+app.get('/', (req, res) => { res.send({ msg: "success", status: 200 }) })
 
-app.listen(PORT,()=>{
+app.listen(PORT, () => {
      console.log(`server is listening on ${PORT}`);
 })
